@@ -13,7 +13,7 @@ const cards = [
   },
   {
     title: "我想做什么",
-    lines: ["做一个解决真实小问题的 AI 工具", "2027 年 3 月站上黑客松现场"],
+    lines: ["做一个解决真实小问题的 AI 工具", "搞点有趣的小玩意"],
   },
 ];
 
@@ -76,7 +76,7 @@ export default function Home() {
             className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900 p-8 text-center"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className="text-lg font-medium text-white">欢迎来找我组队</p>
+            <p className="text-lg font-medium text-white">欢迎来找我玩</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
