@@ -13,7 +13,7 @@ const cards = [
   },
   {
     title: "我想做什么",
-    lines: ["做一个解决真实小问题的 AI 工具", "搞点有趣的小玩意"],
+    lines: ["做一个解决真实小问题的 AI 工具", "学习并产出一些神人玩意"],
   },
 ];
 
@@ -59,7 +59,7 @@ export default function Home() {
             onClick={() => setOpen(true)}
             className="w-full rounded-full bg-white px-8 py-3.5 text-base font-medium text-black transition-opacity hover:opacity-80 sm:w-auto"
           >
-            联系我
+            点这个
           </button>
         </div>
       </main>
@@ -76,13 +76,13 @@ export default function Home() {
             className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900 p-8 text-center"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className="text-lg font-medium text-white">欢迎来找我玩</p>
+            <p className="text-lg font-medium text-white">不要点这个</p>
             <button
               type="button"
               onClick={() => setOpen(false)}
               className="mt-6 w-full rounded-full border border-white/15 px-6 py-2.5 text-sm text-zinc-200 transition-colors hover:bg-white/10"
             >
-              好，知道了
+              彳亍
             </button>
           </div>
         </div>
