@@ -26,7 +26,7 @@ export default function Home() {
     try {
       setQuote("");
       setSource("");
-      const res = await fetch("https://v1.hitokoto.cn/");
+      const res = await fetch("https://v1.hitokoto.cn/?_=" + Date.now());
       if (!res.ok) {
         throw new Error("网络错误：" + res.status);
       }
