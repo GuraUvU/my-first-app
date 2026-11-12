@@ -17,10 +17,14 @@ const cards = [
   },
 ];
 
+const shownCurrencies = ["CNY", "EUR", "JPY", "GBP"];
+
 export default function Home() {
   const [open, setOpen] = useState(false);
   const [quote, setQuote] = useState("");
   const [source, setSource] = useState("");
+  const [rates, setRates] = useState<Record<string, number>>({});
+  const [updatedAt, setUpdatedAt] = useState("");
 
   async function loadQuote() {
     try {
@@ -40,8 +44,30 @@ export default function Home() {
     }
   }
 
+  async function loadRates() {
+    try {
+      setUpdatedAt("");
+      const res = await fetch("https://open.er-api.com/v6/latest/USD");
+      if (!res.ok) {
+        throw new Error("请求失败：" + res.status);
+      }
+      const data = await res.json();
+      console.log(data);
+      if (data.result !== "success") {
+        throw new Error("接口返回失败：" + data["error-type"]);
+      }
+      // TODO: 第 4 步在这里 setRates / setUpdatedAt
+      setRates(data.rates);
+      setUpdatedAt(data.time_last_update_utc);
+    } catch (error) {
+      console.error(error);
+      setUpdatedAt("获取失败，请稍后再试");
+    }
+  }
+
   useEffect(() => {
     loadQuote();
+    loadRates();
   }, []);
 
   return (
@@ -91,6 +117,28 @@ export default function Home() {
               换一句
             </button>
           </div>
+          {/* 卡片5：今日汇率 */}
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center sm:col-span-3">
+            <h2 className="text-lg font-medium text-white">今日汇率</h2>
+            <div className="mt-3 space-y-1.5">
+              {shownCurrencies.map((code) => (
+                <p key={code} className="text-sm leading-8 text-zinc-200">
+                  1 美元 = {rates[code] ? rates[code].toFixed(2) : "—"} {code}
+                </p>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-zinc-400">
+              更新于：{updatedAt ? new Date(updatedAt).toLocaleString("zh-CN") : "加载中……"}
+            </p>
+            <p className="mt-4 text-xs text-zinc-500">老实赚钱，很枯燥吧</p>
+            <button
+              type="button"
+              onClick={loadRates}
+              className="mt-4 rounded-full bg-white/10 px-4 py-1.5 text-xs text-zinc-200 transition-colors hover:bg-white/20"
+            >
+              刷新
+            </button>
+          </div>
         </section>
 
         {/* 底部：按钮 */}
@@ -106,28 +154,30 @@ export default function Home() {
       </main>
 
       {/* 点击按钮后弹出的浮层 */}
-      {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
+      {
+        open && (
           <div
-            role="dialog"
-            aria-modal="true"
-            className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900 p-8 text-center"
-            onClick={(event) => event.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-5 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
           >
-            <p className="text-lg font-medium text-white">不要点这个</p>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="mt-6 w-full rounded-full border border-white/15 px-6 py-2.5 text-sm text-zinc-200 transition-colors hover:bg-white/10"
+            <div
+              role="dialog"
+              aria-modal="true"
+              className="w-full max-w-sm rounded-2xl border border-white/10 bg-zinc-900 p-8 text-center"
+              onClick={(event) => event.stopPropagation()}
             >
-              彳亍
-            </button>
+              <p className="text-lg font-medium text-white">不要点这个</p>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="mt-6 w-full rounded-full border border-white/15 px-6 py-2.5 text-sm text-zinc-200 transition-colors hover:bg-white/10"
+              >
+                彳亍
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }
