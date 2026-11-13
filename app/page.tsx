@@ -56,7 +56,6 @@ export default function Home() {
       if (data.result !== "success") {
         throw new Error("接口返回失败：" + data["error-type"]);
       }
-      // TODO: 第 4 步在这里 setRates / setUpdatedAt
       setRates(data.rates);
       setUpdatedAt(data.time_last_update_utc);
     } catch (error) {
