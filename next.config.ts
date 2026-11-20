@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     ? {
         output: "export",
         images: { unoptimized: true },
+        // 导出成静态站时，把 /about 生成成 about/index.html，
+        // 这样腾讯云这类静态托管不用额外配路由也能访问
+        trailingSlash: true,
       }
     : {}),
   experimental: {
