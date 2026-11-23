@@ -11,8 +11,6 @@ export default function GoldCard() {
 
     async function loadGold() {
         try {
-            setUsdPerOunce((prev) => prev);
-            
             const [goldRes,fxRes] = await Promise.all([
                 fetch("https://api.gold-api.com/price/XAU"),
                 fetch("https://open.er-api.com/v6/latest/USD")
@@ -48,7 +46,7 @@ export default function GoldCard() {
 
     return (
         <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 text-center sm:col-span-3">
-            <h2 className="text-lg font-medium text-white">今日金价</h2>
+            <h2 className="text-lg font-medium text-white">实时金价</h2>
             <div className="mt-3 space-y-1.5">
                 <p className="text-sm leading-8 text-zinc-200">
                     1 克 ≈ {cnyPerGram ? "¥" + cnyPerGram.toFixed(2) : "—"}
