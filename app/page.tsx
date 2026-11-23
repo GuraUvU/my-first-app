@@ -6,24 +6,35 @@ import QuoteCard from "./components/QuoteCard";
 import RateCard from "./components/RateCard";
 import Modal from "./components/Modal";
 import Link from "next/link";
+import { supabase } from "./lib/supabase";
+import GoldCard from "./components/GoldCard";
 
-const cards = [
-  {
-    title: "我在学什么",
-    lines: ["Next.js + React 的页面与组件", "用 LLM API 做一个能用的小功能"],
-  },
-  {
-    title: "我做过什么",
-    lines: ["从零跑通一个 Next.js 项目", "把第一版页面部署到公网上"],
-  },
-  {
-    title: "我想做什么",
-    lines: ["做一个解决真实小问题的 AI 工具", "学习并产出一些神人玩意"],
-  },
-];
+type CardRow = {
+  id: number;
+  title: string;
+  lines: string[];
+};
 
 export default function Home() {
+  const [cards, setCards] = useState<CardRow[]>([]);
   const [open, setOpen] = useState(false);
+
+  async function loadCards() {
+    const { data, error } = await supabase
+      .from("cards")
+      .select("*")
+      .order("sort_order");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+    setCards(data as CardRow[]);
+  }
+
+  useEffect(() => {
+    loadCards();
+  }, []);
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0b0b0f] px-5 py-16 text-zinc-100 sm:px-8 sm:py-24">
@@ -40,10 +51,11 @@ export default function Home() {
         {/* 中间：三张卡片 */}
         <section className="mt-14 grid grid-cols-1 gap-5 sm:mt-16 sm:grid-cols-3 sm:gap-6">
           {cards.map((card) => (
-            <Card key={card.title} title={card.title} lines={card.lines} />
+            <Card key={card.id} title={card.title} lines={card.lines} />
           ))}
           <QuoteCard />
           <RateCard />
+          <GoldCard />
         </section>
         {/* 底部：按钮 */}
         <div className="mt-16 flex flex-col items-center gap-3 sm:mt-20 sm:flex-row sm:justify-center sm:gap-4">
