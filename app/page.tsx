@@ -8,6 +8,8 @@ import Modal from "./components/Modal";
 import Link from "next/link";
 import { supabase } from "./lib/supabase";
 import GoldCard from "./components/GoldCard";
+import MessageCard from "./components/MessageCard";
+import AuthCard from "./components/AuthCard";
 
 type CardRow = {
   id: number;
@@ -56,6 +58,8 @@ export default function Home() {
           <QuoteCard />
           <RateCard />
           <GoldCard />
+          <MessageCard />
+          <AuthCard />
         </section>
         {/* 底部：按钮 */}
         <div className="mt-16 flex flex-col items-center gap-3 sm:mt-20 sm:flex-row sm:justify-center sm:gap-4">
