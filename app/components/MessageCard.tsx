@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
+
+type MessageImage = {
+  id: number;
+  path: string;
+};
 
 type Message = {
   id: number;
   content: string;
   created_at: string;
+  images: MessageImage[];
 };
 
 export default function MessageCard() {
@@ -16,6 +22,9 @@ export default function MessageCard() {
   const [error, setError] = useState("");
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const canSend = !!userEmail && text.trim().length > 0 && !sending;
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -32,7 +41,7 @@ export default function MessageCard() {
   async function loadMessages() {
     const { data, error } = await supabase
       .from("messages")
-      .select("*")
+      .select("id, content, created_at, images(id, path)")
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -40,7 +49,7 @@ export default function MessageCard() {
       console.error(error);
       return;
     }
-    setMessages(data ?? []);
+    setMessages((data as Message[]) ?? []);
   }
 
   async function sendMessage() {
@@ -53,20 +62,50 @@ export default function MessageCard() {
     setSending(true);
     setError("");
 
-    const { error: insertError } = await supabase
-      .from("messages")
-      .insert({ content });
+    try {
+      let imagePath: string | null = null;
+      if (file) {
+        const { data: userData } = await supabase.auth.getUser();
+        const uid = userData.user?.id;
+        if (!uid) throw new Error("用户未登录");
 
-    setSending(false);
+        const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+        const random = crypto.randomUUID();
+        imagePath = `${uid}/${random}.${ext}`;
+        setUploading(true);
+        const { error: uploadError } = await supabase.storage
+          .from("message-images")
+          .upload(imagePath, file, { contentType: file.type });
+        setUploading(false);
+        if (uploadError) throw uploadError;
+      }
 
-    if (insertError) {
-      console.error(insertError);
-      setError("发送失败" + insertError.message);
-      return;
+      const { data: newMessage, error: msgError } = await supabase
+        .from("messages")
+        .insert({ content })
+        .select("id")
+        .single();
+
+      if (msgError) throw msgError;
+
+      if (imagePath && newMessage) {
+        const { error: imgError } = await supabase
+          .from("images")
+          .insert({ message_id: newMessage.id, path: imagePath });
+
+        if (imgError) throw imgError;
+      }
+
+      setText("");
+      setFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      await loadMessages();
+    } catch (err) {
+      console.error(err);
+      setError("发送失败：" + ((err as Error).message ?? "未知错误"));
+    } finally {
+      setSending(false);
     }
-
-    setText("");
-    await loadMessages();
   }
 
   useEffect(() => {
@@ -78,6 +117,7 @@ export default function MessageCard() {
       <h2 className="text-lg font-medium text-white text-center">留言板</h2>
 
       {userEmail ? (
+        <>
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <input
             value={text}
@@ -89,6 +129,13 @@ export default function MessageCard() {
             placeholder="说点什么…（最多 200 字）"
             className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-zinc-100 outline-none placeholder:text-zinc-500 focus:border-white/30"
           />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            className="text-xs text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-xs file:text-zinc-200"
+          />
           <button
             type="button"
             onClick={sendMessage}
@@ -98,6 +145,9 @@ export default function MessageCard() {
             {sending ? "发送中…" : "发送"}
           </button>
         </div>
+        {uploading && <p className="mt-2 text-xs text-zinc-500">图片上传中…</p>}
+        {error && <p className="mt-2 text-xs text-amber-400">{error}</p>}
+      </>
       ) : (
         <div className="mt-4 flex flex-col gap-2 sm:flex-row">
           <div className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-center text-zinc-400 outline-none placeholder:text-zinc-500 focus:border-white/30">
@@ -113,8 +163,6 @@ export default function MessageCard() {
         </div>
       )}
 
-      {userEmail && error && <p className="mt-2 text-xs text-amber-400">{error}</p>}
-
       <ul className="mt-5 space-y-2">
         {messages.length === 0 && (
           <li className="text-center text-xs text-zinc-500">还没有留言，做第一个吧</li>
@@ -128,6 +176,18 @@ export default function MessageCard() {
             <span className="ml-2 text-[11px] text-zinc-500">
               {new Date(m.created_at).toLocaleString("zh-CN")}
             </span>
+            {m.images?.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {m.images.map((img) => (
+                  <img
+                    key={img.id}
+                    src={supabase.storage.from("message-images").getPublicUrl(img.path).data.publicUrl}
+                    alt="留言配图"
+                    className="h-24 w-24 rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>
